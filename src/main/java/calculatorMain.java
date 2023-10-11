@@ -7,13 +7,23 @@
  *
  * @author Vincent
  */
+
+
 public class calculatorMain {
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        // TODO code application logic here
+        System.out.println("Test");
+        String inputValues = "5+5";
+        
+        shuntingYard test = new shuntingYard(inputValues);
+        
+        test.toRPN();
+        
+        String outputTest = test.getOutput();
+        System.out.println(outputTest);
     }
     
 }
