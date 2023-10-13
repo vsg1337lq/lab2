@@ -7,13 +7,42 @@
  *
  * @author Vincent
  */
+
 public class calculatorMain {
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        // TODO code application logic here
+        System.out.println("Test");
+        String inputValues = "5+5";
+        
+        shuntingYard test = new shuntingYard(inputValues);
+        
+        test.toRPN();
+        String output = test.getOutput();
+        System.out.println(output);
+        
+        ReversePolishNotationEvaluator evaluator = new ReversePolishNotationEvaluator();
+        System.out.println(evaluator.evaluateRPN(output));
+        
+        
+        /*
+        try {
+            String localDir = System.getProperty("user.dir");
+            File myObj = new File(localDir + "\\src\\main\\java\\inputTest.txt");
+            Scanner myReader = new Scanner(myObj);
+            while (myReader.hasNextLine()) {
+                String data = myReader.nextLine();
+                test.newInput(data);
+                test.toRPN();
+                System.out.println(test.getOutput());
+            }
+            myReader.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        } */
     }
     
 }
