@@ -9,14 +9,18 @@
  */
 
 import java.util.Stack;
-import java.util.regex.Matcher;
 import java.lang.Character; 
+import java.util.Queue;
+import java.util.LinkedList;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class shuntingYard {
     private String inputString;;
     private Stack<String> operatorStack = new Stack<String>();
-    private Stack<String> outputStack = new Stack<String>();
+    private Queue<String> output = new LinkedList<String>();
+    private boolean log10_SET = false;
+    private boolean invalidInput = false;
     
     public shuntingYard(String initalInput) {
         initalInput = initalInput.toLowerCase();
@@ -27,24 +31,12 @@ public class shuntingYard {
         return operatorStack.empty();
     }
     
-    public boolean isOutputEmpty(){
-        return outputStack.empty();
-    }
-    
     public String operatorPop(){
         return operatorStack.pop();
     }
     
-    public String outputPop(){
-        return outputStack.pop();
-    }   
-    
     public void operatorPush(String token){
         operatorStack.push(token);
-    }
-    
-    public void outputPush(String token){
-        outputStack.push(token);
     }
     
     public String operatorPeek(){
@@ -53,7 +45,34 @@ public class shuntingYard {
     
     public void addInputString(String input){
         input = input.toLowerCase();
+        setInvalidInputStatus(false);
         inputString = input;
+    }
+    
+    public boolean getInvalidInputStatus (){
+        return invalidInput;
+    }
+    
+    public void setInvalidInputStatus (boolean status) {
+        invalidInput = status;
+    }
+    
+    public void setLog10 (){
+        log10_SET = true;
+    }
+    
+    public void resetLog10() {
+        log10_SET = false;
+    }
+    
+    public boolean getLog10_SET (){
+        return log10_SET;
+    }
+    
+    public void newInput(String newIput) {
+        resetLog10();
+        newIput = newIput.toLowerCase();
+        inputString = newIput;
     }
     
     public String returnFunction (int location) {
@@ -67,6 +86,9 @@ public class shuntingYard {
             Matcher matcher = pattern.matcher(subString); // Create a Matcher from the Pattern
             
             if(matcher.find()){
+                if(x == 0){
+                    setLog10();
+                }
                 return functions[x];
             } 
         }
@@ -77,6 +99,20 @@ public class shuntingYard {
     public boolean tokenChecker (String token) {
     
         String[] testExpressions = {"log10", "sin", "cos", "tan", "cot", "ln", "+", "-", "*", "/", "(", ")", "{", "}", "^"}; 
+        
+                // Add a specific case for unary '-'
+        if (token.equals("-") && (operatorStack.isEmpty() || operatorStack.peek().equals("("))) {
+            return true;
+        }
+        
+        // Error checking for consecutive operators
+        if (token.length() > 1) {
+            for (int i = 0; i < token.length() - 1; i++) {
+                if (isOperator(token.charAt(i)) && isOperator(token.charAt(i + 1))) {
+                    return false;
+                }
+            }
+        }
 
         for(int x = 0; x < testExpressions.length; x++) {
             
@@ -90,26 +126,11 @@ public class shuntingYard {
                 Matcher matcher = pattern.matcher(subString); 
     
                 if(matcher.find()){
+                    if(x == 0){
+                        setLog10();
+                    }
                     return true;
                 }
-            }
-        }
-        return false;
-    }
-    
-    public boolean tokenChecker (int location) {
-    
-        String[] testExpressions = {"log10", "sin", "cos", "tan", "cot", "ln", "+", "-", "*", "/", "(", ")", "{", "}", "^"}; 
-
-        for(int x = 0; x < testExpressions.length; x++) {
-
-            String subString = inputString.substring(0, location + testExpressions[x].length());
-
-            Pattern pattern = Pattern.compile(testExpressions[x], Pattern.LITERAL);
-            Matcher matcher = pattern.matcher(subString); 
-
-            if(matcher.find()){
-                return true;
             }
         }
         return false;
@@ -123,6 +144,8 @@ public class shuntingYard {
             if(location + testExpressions[x].length() > inputString.length()) {
                 continue;
             }
+            
+            
 
             String subString = inputString.substring(location, location + testExpressions[x].length());
 
@@ -130,11 +153,18 @@ public class shuntingYard {
             Matcher matcher = pattern.matcher(subString); 
 
             if(matcher.find()){
+                if(x == 0){
+                        setLog10();
+                }
                 return testExpressions[x];
             }
         }
         
         return null;
+    }
+    
+    private boolean isOperator(char c) {
+        return c == '+' || c == '-' || c == '*' || c == '/' || c == '^';
     }
    
     public int getPrecedence(String token){
@@ -163,49 +193,97 @@ public class shuntingYard {
     public void toRPN () {
         for(int i = 0; i < inputString.length(); i++) {
             String token = inputString.substring(i, i+1);
+
+            // Handle negative numbers or negative operators
+            if (token.equals("-") && (i == 0 || inputString.charAt(i - 1) == '(')) {
+                token = "_"; // Change '-' to '_' to denote unary minus
+            }
+            
+            //System.out.println(token);
             
             if(Character.isDigit(token.charAt(0)) == true) {
-                outputStack.push(token);
+                int start = i;
+                int current = i; // separate variable for iteration
+                if (getLog10_SET() == false){
+                    while (current < inputString.length()) {
+                        if (Character.isDigit(inputString.charAt(current))) {
+                                current++;
+                        } else {
+                            break;
+                        }
+                    }
+                    //System.out.println(inputString.substring(start, current));
+                    output.add(inputString.substring(start, current));
+                    i = current - 1; // update the original variable 'i' to the value of 'current'
+                } else {
+                    i++;
+                    resetLog10();
+                }
             } else if (returnToken(i) != null) {
                 String currToken = returnToken(i);
-                
+                    
                 if(operatorStack.isEmpty()){
                     operatorStack.push(currToken);
                 } else {
                     String operatorStackTop = operatorStack.peek();
                     
-                    if(currToken == "(" || currToken == "{") {
-                        operatorStack.push(currToken);
-                    } else if (currToken == ")" || currToken == "}"){
-                        while(operatorStack.peek() != "(" || operatorStack.peek() != "{"){
-                            outputStack.push(operatorStack.pop());
-                        }
-                        operatorStack.pop();
+                    if(currToken.equals("}") || currToken.equals(")") && operatorStack.size() == 1) {
+                        setInvalidInputStatus(true);
+                        break;
                     } else {
-                        if(getPrecedence(currToken) <  getPrecedence(operatorStackTop)) {
-                            outputStack.push(operatorStack.pop());
-                        } else {
+                        if(currToken == "(" || currToken == "{") {
                             operatorStack.push(currToken);
+                        } else if (currToken == ")"){
+                            while(operatorStack.peek() != "("){
+
+                                    output.add(operatorStack.pop());
+                            }
+
+                            if (operatorStack.peek() == "(") {
+                                operatorStack.pop();
+                            }
+                        } else if (currToken == "}"){
+                            while(operatorStack.peek() != "{"){
+
+                                    output.add(operatorStack.pop());
+                            }
+
+                            if (operatorStack.peek() == "{") {
+                                operatorStack.pop();
+                            }
+                        }else {
+                            if(getPrecedence(currToken) <  getPrecedence(operatorStackTop)) {
+                                output.add(operatorStack.pop());
+                            } else {
+                                operatorStack.push(currToken);
+                            }
                         }
                     }
                 }
-            
             } else {
-                //invalid character
+                setInvalidInputStatus(true);
+                break;
             }
         }
-        while(operatorStack.isEmpty() == false){
-            outputStack.push(operatorStack.pop());
+        if(getInvalidInputStatus() == false){
+            while(operatorStack.isEmpty() == false){
+                output.add(operatorStack.pop());
+            }   
         }
-        
     }
+   
     
     public String getOutput (){
-        String outputString = outputStack.pop();
-        while (!outputStack.isEmpty()) {
-            String concatString = outputStack.pop();
-            outputString = outputString.concat(concatString);
-        }
-          return outputString;
+       if(getInvalidInputStatus() == false){ 
+            String outputString = output.poll();
+            while (!output.isEmpty()) {
+                String concatString = output.poll();
+                outputString = outputString.concat(" ");
+                outputString = outputString.concat(concatString);
+            }
+              return outputString;
+       } else {
+           return "invalid input";
+       }
     }
 }
