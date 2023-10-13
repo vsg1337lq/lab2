@@ -199,12 +199,12 @@ public class shuntingYard {
                 token = "_"; // Change '-' to '_' to denote unary minus
             }
             
-            //System.out.println(token);
-            
+            //checks for digits and then pushes them onto the stack
             if(Character.isDigit(token.charAt(0)) == true) {
                 int start = i;
                 int current = i; // separate variable for iteration
                 if (getLog10_SET() == false){
+                    //ensure the entire number added to the stack i.e. 100,223
                     while (current < inputString.length()) {
                         if (Character.isDigit(inputString.charAt(current))) {
                                 current++;
@@ -212,7 +212,6 @@ public class shuntingYard {
                             break;
                         }
                     }
-                    //System.out.println(inputString.substring(start, current));
                     output.add(inputString.substring(start, current));
                     i = current - 1; // update the original variable 'i' to the value of 'current'
                 } else {
@@ -227,7 +226,8 @@ public class shuntingYard {
                 } else {
                     String operatorStackTop = operatorStack.peek();
                     
-                    if(currToken.equals("}") || currToken.equals(")") && operatorStack.size() == 1) {
+                    //check for opening brackets or parethesis at the end of an expression
+                    if(inputString.length() < i && currToken.equals("{") || currToken.equals("{")) {
                         setInvalidInputStatus(true);
                         break;
                     } else {
@@ -260,10 +260,7 @@ public class shuntingYard {
                         }
                     }
                 }
-            } else {
-                setInvalidInputStatus(true);
-                break;
-            }
+            } 
         }
         if(getInvalidInputStatus() == false){
             while(operatorStack.isEmpty() == false){

@@ -8,6 +8,8 @@
  * @author Vincent
  */
 
+import java.io.*;
+import java.util.Scanner; 
 public class calculatorMain {
 
     /**
@@ -15,19 +17,23 @@ public class calculatorMain {
      */
     public static void main(String[] args) {
         System.out.println("Test");
-        String inputValues = "5+5";
-        
+        String inputValues = "sin(0)";
+       /* 
         shuntingYard test = new shuntingYard(inputValues);
         
         test.toRPN();
         String output = test.getOutput();
         System.out.println(output);
         
+        //ReversePolishNotationEvaluator evaluator = new ReversePolishNotationEvaluator();
+        //System.out.println(evaluator.evaluateRPN(output));
+        */
+        
+        
+        shuntingYard test = new shuntingYard(inputValues);
+        test.toRPN();
         ReversePolishNotationEvaluator evaluator = new ReversePolishNotationEvaluator();
-        System.out.println(evaluator.evaluateRPN(output));
         
-        
-        /*
         try {
             String localDir = System.getProperty("user.dir");
             File myObj = new File(localDir + "\\src\\main\\java\\inputTest.txt");
@@ -36,13 +42,16 @@ public class calculatorMain {
                 String data = myReader.nextLine();
                 test.newInput(data);
                 test.toRPN();
-                System.out.println(test.getOutput());
+                
+                String output = test.getOutput();
+                System.out.println(output);
+                //System.out.println(evaluator.evaluateRPN(output));
             }
             myReader.close();
         } catch (FileNotFoundException e) {
             System.out.println("An error occurred.");
             e.printStackTrace();
-        } */
-    }
+        } 
+    } 
     
 }
